@@ -1,3 +1,6 @@
+#ifndef AUX_CPP
+#define AUX_CPP
+
 #include <iostream>
 #include <unordered_map>
 #include <stack>
@@ -190,3 +193,5 @@ class TableStack {
             }
         }
 }
+
+#endif
