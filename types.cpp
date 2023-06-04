@@ -2,6 +2,7 @@
 
 bool isLegalAssign(string left, string right)
 {
+    if(left == "" || right == "") return false;
     return left == right || (left == "int" && right == "byte");
 }
 

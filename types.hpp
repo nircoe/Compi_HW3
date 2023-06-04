@@ -22,10 +22,10 @@ class TypeNode : public Node {
 };
 
 class IdNode : public Node {
-    string name;
+    const string name;
     
     public:
-        IdNode(string _name) :name(_name) {};
+        IdNode(const string _name) : name(_name) {};
         string GetName() { return name; }
 };
 
@@ -38,10 +38,10 @@ class OverrideNode : public Node {
 };
 
 class NumNode : public Node {
-    string num_as_string;
+    const string num_as_string;
 
     public:
-        NumNode(string _num_as_string) : num_as_string(_num_as_string) {};
+        NumNode(const string _num_as_string) : num_as_string(_num_as_string) {};
         string GetNumAsString() { return num_as_string; }
 };
 
@@ -58,6 +58,7 @@ class ExpListNode : public Node {
 
     public:
         ExpListNode(vector<ExpNode*> _exps) : exps(_exps) {};
+        ~ExpListNode() {};
         vector<ExpNode*>& GetExpsList() { return exps; }
 };
 
@@ -76,6 +77,7 @@ class FormalsListNode : public Node {
 
     public:
         FormalsListNode(vector<FormalDeclNode*> _decls) : decls(_decls) {};
+        ~FormalsListNode() {};
         vector<FormalDeclNode*>& GetDecls() { return decls; }
 };
 
@@ -84,6 +86,7 @@ class FormalsNode : public Node {
 
     public:
         FormalsNode(FormalsListNode* _list = nullptr) : list(_list) {};
+        ~FormalsNode() {};
         vector<FormalDeclNode*>& GetList() { return list->GetDecls(); }
 };
 
@@ -94,6 +97,7 @@ class FuncDeclNode : public Node {
 
     public:
         FuncDeclNode(string _type, string _name, vector<FormalDeclNode*> _decls) : type(_type) , name(_name) , decls(_decls) {};
+        ~FuncDeclNode() {};
         string GetType() { return type; }
         string GetName() { return name; }
         vector<FormalDeclNode*>& GetDecls() { return decls; }

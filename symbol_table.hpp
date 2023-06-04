@@ -25,60 +25,18 @@ using std::stack;
 using std::vector;
 using std::string;
 
-class FunctionValue {
-
-    public:
-        bool isOverride;
-        vector<vector<string>> types;
-
-        FunctionValue(bool _isOverride) : isOverride(_isOverride) {};
-        int insertFunc(vector<string> type);
-        int containsType(vector<string> type);
-};
-
-class VariableValue {
-    string type;
-    int offset;
-
-    public:
-        VariableValue() {};
-        void setTypeOffset(string _type, int _offset) { this->type = _type; this->offset = _offset; }
-        string getType() { return type; }
-        int getOffset() { return offset; }
-};
-
-class UnionValue {
-
-    public:
-        FunctionValue* functions;
-        VariableValue* variable;
-
-        UnionValue() : functions(nullptr) , variable(nullptr) {};
-        ~UnionValue() {
-            if(functions != nullptr) delete functions;
-            if(variable != nullptr) delete variable;
-        };
-};
-
 class TableValue {
 
     public:
         bool isFunc;
-        UnionValue* val;
+        bool isOverride;
+        vector<vector<string>> functions_params_types;
+        string type; // or rettype
+        int offset;
 
-        TableValue(bool _isOverride, bool _isFunc) : isFunc(_isFunc) {
-            val = new UnionValue();
-            if(_isFunc) {
-                val->functions = new FunctionValue(_isOverride);
-            }
-            else {
-                val->variable = new VariableValue();
-            }
-        }
-        ~TableValue() {
-            delete val;
-        };
-        int insertValue(vector<string> type, int offset);
+        TableValue(bool _isFunc, bool _isOverride) : isFunc(_isFunc), isOverride(_isOverride) { };
+        int insertValue(string _type, int _offset = 0, vector<string> _params_types = {});
+        int containsFunc(vector<string> _params_types);
 
 };
 
@@ -95,29 +53,39 @@ class SymbolTable {
                 delete it.second;
             }
         };
-        int insertSymbol(const string& name, vector<string> type, int offset, bool isOverride, bool isFunc);
-        int containsSymbol(string name, vector<string> type, bool isFunc = false);
+        int insertSymbol(const string& name, string type, vector<string> params_types, int offset, bool isOverride, bool isFunc);
+        int containsVariable(string name, string type);
+        int containsFunction(const string& name, vector<string> params_types = {});
         bool containsName(const string& name);
 };
 
 class TableStack {
-
+    TableStack() = default;
     public:
         stack<int> offsets;
         stack<SymbolTable*> tables;
         string funcType;
 
-        TableStack() : funcType("") {
+        static TableStack& Instance() {
+            static TableStack ins;
+            return ins;
+        }
+
+        /* TableStack() : funcType("") {
             SymbolTable* base = new SymbolTable();
             tables.push(base);
             offsets.push(0);
 
             base->insertSymbol("print", {"void", "string"}, 0, false, true);
             base->insertSymbol("printi", {"void", "int"}, 0, false, true);
-        };
-        ~TableStack() = default;
+        }; */
+        void Init();
+        void openGlobalScope();
+        //~TableStack() = default;
         bool isInCurrentScope(const string& name);
-        int containsSymbol(const string& name, vector<string> type, bool isFunc = false);
+        bool containsName(const string& name);
+        int containsFunction(const string& name, vector<string> params_types = {});
+        int containsVariable(const string& name, string type);
         string getType(const string& name);
         bool containsMain();
         bool isCurrentScopeWhile();
@@ -125,7 +93,8 @@ class TableStack {
         void newScope(bool isWhileScope = false);
         void closeScope();
         void MakeTable(SymbolTable* parent, bool isWhile);
-        int Insert(string name, vector<string> type, int offset, bool isOverride = false, bool isFunc = false);
+        int Insert(string name, string type, int offset, vector<string> params_types = {}, bool isOverride = false, bool isFunc = false);
+        bool IsEmpty();
 };
 
 
