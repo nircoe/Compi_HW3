@@ -1,355 +1,368 @@
 %{
-	#include "hw3_output.hpp"
-    #include "symbol_table.hpp"
-    #include "types.hpp"
-	#include <iostream>
-	#include <stdlib.h>
-    using namespace output;
-
-	extern int yylex();
-    extern int yylineno;
-	int yyerror(const char * message);
-
-    TableStack* tables = new TableStack();
+#include "hw3_output.hpp"
+#include <iostream>
+#include <stdlib.h>
+#include "Types.hpp"
+#include "SymbolTable.hpp"
+extern int yylex();
+extern int yylineno;
+using namespace output;
+int yyerror(const char * message);
+SymbolTable* symbol_table = &(SymbolTable::getSymbolTable());
 %}
 
-%token VOID INT BYTE B BOOL OVERRIDE TRUE FALSE RETURN IF WHILE BREAK CONTINUE COMMA LBRACE RBRACE ID NUM STRING
+%nonassoc ID
+%nonassoc VOID
+%nonassoc OVERRIDE
+%nonassoc STRING
+%nonassoc NUM
+%nonassoc INT
+%nonassoc BYTE
+%nonassoc B
+%nonassoc BOOL
+
 %right ASSIGN
 %left OR
 %left AND
+
+%nonassoc TRUE
+%nonassoc FALSE
+%nonassoc RETURN
+%nonassoc IF
+%nonassoc WHILE
+%nonassoc BREAK
+%nonassoc CONTINUE
+
+%nonassoc COMMA
+
+%left EQUALOP
 %left RELOP
-%left PLUSMINUS
-%left MULTDIV
+%left SUMOP
+%left MULTIPLEOP
 %right NOT
 %left LPAREN
 %left RPAREN
 %left SC
-%right ELSE
+%left LBRACE
+%left RBRACE
+
+%nonassoc ELSE
+
+%nonassoc END
 
 %%
+/*declarations*/
 
-Program     :   Funcs { 
-                    if(!tables->containsMain()) {
-                        errorMainMissing();
-                        exit(1);
-                    }
-                    tables->closeScope();
-                    exit(0);
-                };
-Funcs       :         { }
-            |   FuncDecl Funcs { }
-            ;
-FuncDecl    :   OverRide RetType ID LPAREN Formals {
-                    OverrideNode* override = (OverrideNode*)$1;
-                    RetTypeNode* ret_type = (RetTypeNode*)$2;
-                    IdNode* id = (IdNode*)$3;
-                    FormalsNode* formals = (FormalsNode*)$5;
+Program    : Funcs END {
+    if (!symbol_table->mainExists()) {
+        errorMainMissing();
+        exit(1);
+    }
+    symbol_table->closeScope();
+    exit(0);
+}
 
-                    vector<string> type;
-                    type.push_back(ret_type->GetType());
-                    vector<FormalDeclNode*> vec = formals->GetList();
-                    for(int i = 0; i < vec.size(); i++) {
-                        type.push_back(vec[i]->GetType());
-                    }
-                    int res = tables->Insert(id->GetName(), type, 0, override->CheckIsOverride(), true);
-                    switch(res) {
-                        case ERROR_DEF:
-                            errorDef(yylineno, id->GetName());
-                            break;
-                        case ERROR_NO_OVERRIDE:
-                            errorFuncNoOverride(yylineno, id->GetName());
-                            break;
-                        case ERROR_OVERRIDE_NO_DECL:
-                            errorOverrideWithoutDeclaration(yylineno, id->GetName());
-                            break;
-                        case ERROR_MAIN_OVERRIDE:
-                            errorMainOverride(yylineno);
-                            break;
-                    }
+Funcs      : /*epsilon*/ {}
+| FuncDecl Funcs {}
 
-                    if(res != SUCCESS) exit(1);
-                    // should add $$ = new FuncDeclNode* ?
+FuncDecl   : OverRide RetType ID LPAREN Formals {
 
-                } RPAREN LBRACE Statements RBRACE {
-                    tables->funcType = "";
-                    tables->closeScope();    
-                };
-OverRide    :         { $$ = new OverrideNode(); }
-            |   OVERRIDE { $$ = new OverrideNode(true); }
-            ;
-RetType     :   Type { 
-                    TypeNode* type = (TypeNode*)$1;
-                    $$ = new RetTypeNode(type->GetType());
-                }
-            |   VOID { 
-                    $$ = new RetTypeNode("void");
-                }
-            ;
-Formals     :        { $$ = new FormalsNode(); }
-            |   FormalsList { $$ = new FormalsNode((FormalsListNode*)$1); }
-            ;
-FormalsList :   FormalDecl { 
-                    vector<FormalDeclNode*> vec;
-                    vec.insert(vec.begin(), (FormalDeclNode*)$1);
-                    $$ = new FormalsListNode(vec);
-                }
-            |   FormalDecl COMMA FormalsList { 
-                    FormalDeclNode* decl = (FormalDeclNode*)$1;
-                    FormalsListNode* list = (FormalsListNode*)$3;
-                    vector<FormalDeclNode*> vec = list->GetDecls();
-                    vec.insert(vec.begin(), decl);
-                    $$ = new FormalsListNode(vec);
-                }
-            ;
-FormalDecl  :   Type ID { 
-                    TypeNode* type = (TypeNode*)$1;
-                    IdNode* id = (IdNode*)$2;
-                    if(tables->isInCurrentScope(id->GetName())) {
-                        errorDef(yylineno, id->GetName());
-                        exit(1);
-                    }
-                    $$ = new FormalDeclNode(type->GetType(), id->GetName());
-                };
-Statements  :   Statement { }
-            |   Statements Statement { }
-            ;
-Statement   :   LBRACE OPENSCOPE Statements RBRACE CLOSESCOPE { }
-            |   Type ID SC { 
-                    TypeNode* type = (TypeNode*)$1;
-                    IdNode* id = (IdNode*)$2;
-                    int res = tables->Insert(id->GetName(), { type->GetType() }, tables->offsets.top());
-                    if(res == ERROR_DEF) {
-                        errorDef(yylineno, id->GetName());
-                        exit(1);
-                    }
-                }
-            |   Type ID ASSIGN Exp SC { 
-                    TypeNode* type = (TypeNode*)$1;
-                    IdNode* id = (IdNode*)$2;
-                    ExpNode* exp = (ExpNode*)$4;
-                    if(isLegalAssign(type->GetType(), exp->GetType())) {
-                        int res = tables->Insert(id->GetName(), { type->GetType() }, tables->offsets.top());
-                        if(res == ERROR_DEF) {
-                            errorDef(yylineno, id->GetName());
-                            exit(1);
-                        }
-                    }
-                    else {
-                        errorMismatch(yylineno);
-                        exit(1);
-                    }
-                }
-            |   ID ASSIGN Exp SC { 
-                    IdNode* id = (IdNode*)$1;
-                    ExpNode* exp = (ExpNode*)$3;
-                    int res = tables->containsSymbol(id->GetName(), { exp->GetType() });
-                    if(res == ERROR_UNDEF) {
-                        errorUndef(yylineno, id->GetName());
-                        exit(1);
-                    }
-                    else {
-                        string type = tables->getType(id->GetName());
-                        if(!isLegalAssign(type, exp->GetType())) {
-                            errorMismatch(yylineno);
-                            exit(1);
-                        }
-                    }
-                }
-            |   Call SC { }
-            |   RETURN SC { 
-                    if(tables->funcType != "void") {
-                        errorMismatch(yylineno);
-                        exit(1);
-                    }
-                }
-            |   RETURN Exp SC { 
-                    ExpNode* exp = (ExpNode*)$2;
-                    if(!isLegalAssign(tables->funcType, exp->GetType())) {
-                        errorMismatch(yylineno);
-                        exit(1);
-                    }
-                }
-            |   IF LPAREN ISEXPBOOL RPAREN OPENSCOPE Statement CLOSESCOPE { }
-            |   IF LPAREN ISEXPBOOL RPAREN OPENSCOPE Statement CLOSESCOPE ELSE OPENSCOPE Statement CLOSESCOPE { }
-            |   WHILE LPAREN ISEXPBOOL RPAREN WHILESCOPE Statement CLOSESCOPE { }
-            |   BREAK SC { 
-                    if(!tables->isCurrentScopeWhile()) {
-                        errorUnexpectedBreak(yylineno);
-                        exit(1);
-                    }
-                }
-            |   CONTINUE SC {
-                    if(!tables->isCurrentScopeWhile()) {
-                        errorUnexpectedContinue(yylineno);
-                        exit(1);
-                    }
-                }
-            ;
-Call        :   ID LPAREN ExpList RPAREN {
-                    IdNode* id = (IdNode*)$1;
-                    ExpListNode* exp_list = (ExpListNode*)$3;
-                    vector<string> types;
-                    vector<ExpNode*> list = exp_list->GetExpsList();
-                    for(int i = 0; i < list.size(); i++) {
-                        types.push_back(list[i]->GetType());
-                    }
-                    int res = tables->containsSymbol(id->GetName(), types, true);
-                    switch(res) {
-                        case ERROR_UNDEF_FUNC:
-                            errorUndefFunc(yylineno, id->GetName());
-                            exit(1);
-                            break;
-                        case ERROR_PROTOTYPE_MISMATCH:
-                            errorPrototypeMismatch(yylineno, id->GetName());
-                            exit(1);
-                            break;
-                        case ERROR_AMBIGUOUS_CALL:
-                            errorAmbiguousCall(yylineno, id->GetName());
-                            exit(1);
-                            break;
-                    }
-                    if(res != SUCCESS) exit(1);
-                    $$ = new CallNode(tables->getType(id->GetName()), id->GetName());
-                }
-            |   ID LPAREN RPAREN { 
-                    IdNode* id = (IdNode*)$1;
-                    int res = tables->containsSymbol(id->GetName(), {}, true);
-                    switch(res) {
-                        case ERROR_UNDEF_FUNC:
-                            errorUndefFunc(yylineno, id->GetName());
-                            exit(1);
-                            break;
-                    }
-                    if(res != SUCCESS) exit(1);
-                    $$ = new CallNode(tables->getType(id->GetName()), id->GetName());
-                }
-            ;
-ExpList     :   Exp { 
-                    vector<ExpNode*> exps;
-                    exps.push_back((ExpNode*)$1);
-                    $$ = new ExpListNode(exps);
-                }
-            |   Exp COMMA ExpList { 
-                    ExpListNode* list = (ExpListNode*)$3;
-                    list->GetExpsList().push_back((ExpNode*)$1);
-                    $$ = new ExpListNode(list->GetExpsList());
-                }
-            ;
-Type        :   INT { $$ = new TypeNode("int"); }
-            |   BYTE { $$ = new TypeNode("byte"); }
-            |   BOOL { $$ = new TypeNode("bool"); }
-            ;
-Exp         :   LPAREN Exp RPAREN { $$ = new ExpNode(((ExpNode*)$2)->GetType()); }
-            |   Exp PLUSMINUS Exp { 
-                    ExpNode* exp1 = (ExpNode*)$1;
-                    ExpNode* exp2 = (ExpNode*)$3;
-                    string type = GetSumType(exp1->GetType(), exp2->GetType());
-                    if(type == "") {
-                        errorMismatch(yylineno);
-                        exit(1);
-                    }
-                    $$ = new ExpNode(type);
-                }
-            |   Exp MULTDIV Exp { 
-                    ExpNode* exp1 = (ExpNode*)$1;
-                    ExpNode* exp2 = (ExpNode*)$3;
-                    string type = GetSumType(exp1->GetType(), exp2->GetType());
-                    if(type == "") {
-                        errorMismatch(yylineno);
-                        exit(1);
-                    }
-                    $$ = new ExpNode(type);
-                }
-            |   ID { 
-                    IdNode* id = (IdNode*)$1;
-                    string type = tables->getType(id->GetName());
-                    if(type == "") {
-                        errorUndef(yylineno, id->GetName());
-                        exit(1);
-                    }
-                    $$ = new ExpNode(type);
-                }
-            |   Call { $$ = new ExpNode(((CallNode*)$1)->GetType()); }
-            |   NUM { $$ = new ExpNode("int"); }
-            |   NUM B { 
-                    NumNode* num = (NumNode*)$1;
-                    if(stoi(num->GetNumAsString()) > 255) {
-                        errorByteTooLarge(yylineno, num->GetNumAsString());
-                        exit(1);
-                    }
-                    $$ = new ExpNode("byte");
-                }
-            |   STRING { $$ = new ExpNode("string"); }
-            |   TRUE { $$ = new ExpNode("bool"); }
-            |   FALSE { $$ = new ExpNode("bool"); }
-            |   NOT Exp { 
-                    ExpNode* exp = (ExpNode*)$2;
-                    if(exp->GetType() != "bool") {
-                        errorMismatch(yylineno);
-                        exit(1);
-                    }
-                    $$ = new ExpNode("bool");
-                }
-            |   Exp AND Exp { 
-                    ExpNode* exp1 = (ExpNode*)$1;
-                    ExpNode* exp2 = (ExpNode*)$3;
-                    if(exp1->GetType() != "bool" || exp2->GetType() != "bool") {
-                        errorMismatch(yylineno);
-                        exit(1);
-                    }
-                    $$ = new ExpNode("bool");
-                }
-            |   Exp OR Exp { 
-                    ExpNode* exp1 = (ExpNode*)$1;
-                    ExpNode* exp2 = (ExpNode*)$3;
-                    if(exp1->GetType() != "bool" || exp2->GetType() != "bool") {
-                        errorMismatch(yylineno);
-                        exit(1);
-                    }
-                    $$ = new ExpNode("bool");
-                }
-            |   Exp RELOP Exp {
-                    ExpNode* exp1 = (ExpNode*)$1;
-                    ExpNode* exp2 = (ExpNode*)$3;
-                    if(GetSumType(exp1->GetType(), exp2->GetType()) == "") {
-                        errorMismatch(yylineno);
-                        exit(1);
-                    }
-                    $$ = new ExpNode("bool");
-                }
-            |   LPAREN Type RPAREN Exp {
-                    TypeNode* type = (TypeNode*)$2;
-                    ExpNode* exp = (ExpNode*)$4;
-                    if(!IsLegalConvertion(exp->GetType() ,type->GetType())) {
-                        errorMismatch(yylineno);
-                        exit(1);
-                    }
-                    $$ = new ExpNode(type->GetType());
-                }
-            ;
+    override_t* override = (override_t*)$1;
+    retType_t* returnType = (retType_t*)$2;
+    ID_t* id = (ID_t*)$3;
+    formals_t* formals = (formals_t*)$5;
 
-ISEXPBOOL   :   Exp {
-                    ExpNode* exp = (ExpNode*)$1;
-                    if(exp->GetType() != "bool") {
-                        errorMismatch(yylineno);
-                        exit(1);
-                    }
-                };
-OPENSCOPE   :   { tables->newScope(); };
-WHILESCOPE  :   { tables->newScope(true); };
-CLOSESCOPE  :   { tables->closeScope(); };
+    symbol_table->declFunc(id->ID_name, returnType->type, formals, override->isOverRide, yylineno);
 
+    $$ = new funcDeclarations_t(returnType->type, formals->declarations, id->ID_name);
+
+ }
+ RPAREN LBRACE Statements RBRACE {
+    symbol_table->curr_func_type = NULL_TYPE;
+    symbol_table->closeScope();
+ }
+
+override   : /*epsilon*/ { $$ = new override_t(false); }
+| OVERRIDE { $$ = new override_t(true); }
+
+RetType    : Type {
+    type_t* type = (type_t*)$1;
+    $$ = new retType_t(type->type);
+}
+| VOID { $$ = new retType_t(VOID); }
+
+Formals    : /*epsilon*/ { $$ = new formals_t(); }
+| FormalsList { $$ = new formals_t(((formalsList_t*)$1)->declarations); }
+
+FormalsList :  formalDeclarations_t  {
+    std::vector<formalDeclarations_t*> vec;
+    vec.insert(vec.begin(), (formalDeclarations_t*)$1);
+    formalsList_t* formals_list = new formalsList_t(vec);
+    $$ = formals_list;
+}
+
+| FormalDecl COMMA FormalsList {
+    formalDeclarations_t* formal_dec = (formalDeclarations_t*)$1;
+    formalsList_t* formal_list = (formalsList_t*)$3;
+    ///formal_list->declarations.push_back(formal_dec);
+    formal_list->declarations.insert(formal_list->declarations.begin(), formal_dec);
+
+    $$ = new formalsList_t(formal_list->declarations);
+}
+
+FormalDecl : Type ID {
+    ID_t* id = (ID_t*)$2;
+    type_t* type = (type_t*)$1;
+    /// #TODO check piazza for currentscope / all scopes becase I think we cant do shadowing
+    if (symbol_table->isInCurrScope(id->ID_name)) {
+        errorDef(yylineno, id->ID_name);
+        exit(1);
+    }
+    formalDeclarations_t* formal = new formalDeclarations_t(type->type, id->ID_name);
+    $$ = formal;
+}
+
+Statements : Statement
+| Statements Statement {}
+
+Statement  : LBRACE OpenScope Statements RBRACE CloseScope { }
+| Type ID SC {
+    type_t* type = (type_t*)$1;
+    ID_t* id = (ID_t*)$2;
+    if (symbol_table->symbDeclared(id->ID_name)) {
+      errorDef(yylineno, id->ID_name);
+      exit(1);
+    }
+    symbol_table->declareVar(id->ID_name, type->type);
+}
+
+| Type ID ASSIGN Expr SC {
+    type_t* type = (type_t*)$1;
+    ID_t* id = (ID_t*)$2;
+    expr_t* exp = (expr_t*)$4;
+    if (symbol_table->symbDeclared(id->ID_name)) {
+        errorDef(yylineno, id->ID_name);
+        exit(1);
+    }
+    else {
+        if (AssignLegality(type->type, exp->type)) {
+            symbol_table->declareVar(id->ID_name, type->type);
+        }
+        else {
+            errorMismatch(yylineno);
+            exit(1);
+        }
+    }
+}
+| ID ASSIGN Expr SC {
+    ID_t* id = (ID_t*)$1;
+    expr_t* exp = (expr_t*)$3;
+    if (!symbol_table->symbDeclared(id->ID_name)) {
+        errorUndef(yylineno, id->ID_name);
+        exit(1);
+    }
+    else {
+        TypesEnum type = symbol_table->getIDType(id->ID_name);
+        if (!AssignLegality(type, exp->type)) {
+            errorMismatch(yylineno);
+            exit(1);
+        }
+    }
+}
+| Call SC {}
+| RETURN SC {
+    if(symbol_table->curr_func_type != VOID)
+    {
+        errorMismatch(yylineno);
+        exit(1);
+    }
+}
+| RETURN Expr SC {
+    expr_t* exp = (expr_t*)$2;
+    if(!AssignLegality(symbol_table->curr_func_type, exp->type)) {
+        errorMismatch(yylineno);
+        exit(1);
+    }
+}
+| IF LPAREN IsExpBool RPAREN OpenScope Statement CloseScope
+| IF LPAREN IsExpBool RPAREN OpenScope Statement CloseScope ELSE OpenScope Statement CloseScope
+| WHILE LPAREN IsExpBool RPAREN WhileScope Statement CloseScope
+| BREAK SC  {
+    bool inWhile = symbol_table->isGlobalScopeInWhile();
+    if(!inWhile)
+    {
+        errorUnexpectedBreak(yylineno);
+        exit(1);
+    }
+}
+| CONTINUE SC {
+    bool inWhile = symbol_table->isGlobalScopeInWhile();
+    if(!inWhile)
+    {
+        errorUnexpectedContinue(yylineno);
+        exit(1);
+    }
+}
+
+Call      :  ID LPAREN ExpList RPAREN {
+    ID_t* id = (ID_t*)$1;
+    exprList_t* expr_list = (exprList_t*)$3;
+    bool isDec = symbol_table->isDeclared(id->ID_name, true);
+    if(!isDec)
+    {
+         errorUndefFunc(yylineno, id->ID_name);
+         exit(1);
+    }
+    symbol_table->checkFuncParams(id->ID_name, expr_list->exprs, yylineno);
+    $$ = new call_t(symbol_table->getFuncType(id->ID_name, expr_list->exprs), id->ID_name);
+}
+| ID LPAREN RPAREN {
+    ID_t* id = (ID_t*)$1;
+    if(!symbol_table->isDeclared(id->ID_name, true))
+    {
+         errorUndefFunc(yylineno, id->ID_name);
+         exit(1);
+    }
+    symbol_table->checkFuncParams(id->ID_name, yylineno);
+    std::vector<expr_t*> exprs;
+    $$ = new call_t(symbol_table->getFuncType(id->ID_name,exprs), id->ID_name);
+}
+
+ExpList   :  Expr {
+    std::vector<expr_t*> exprs;
+    exprs.push_back((expr_t*)$1);
+    $$ = new exprList_t(exprs);
+}
+| Expr COMMA ExpList {
+    exprList_t* expr_list = (exprList_t*)$3;
+    expr_list->exprs.push_back((expr_t*)$1);
+    $$ = new exprList_t(expr_list->exprs);
+}
+
+Type      : INT  {$$ = new type_t(INT);}
+|  BYTE {$$ = new type_t(BYTE);}
+|  BOOL {$$ = new type_t(BOOL);}
+
+Expr      : LPAREN  Expr RPAREN  { $$ = new expr_t(((expr_t*)$2)->type); }
+| Expr SUMOP Expr {
+    expr_t* first = (expr_t*)$1;
+    expr_t* second = (expr_t*)$3;
+    TypesEnum type = SumType(first->type, second->type);
+    if (type == NULL_TYPE) {
+        errorMismatch(yylineno);
+        exit(1);
+    }
+    $$ = new expr_t(type);
+}
+| Expr MULTIPLEOP Expr {
+    expr_t* first = (expr_t*)$1;
+    expr_t* second = (expr_t*)$3;
+    TypesEnum type = SumType(first->type, second->type);
+    if (type == NULL_TYPE) {
+        errorMismatch(yylineno);
+        exit(1);
+    }
+    $$ = new expr_t(type);
+}
+| ID   { ID_t* id = (ID_t*)$1;
+
+          if (!symbol_table->isDeclared(id->ID_name)) {
+                 errorUndef(yylineno, id->ID_name);
+                 exit(1);
+             }
+          $$ = new expr_t(symbol_table->getIDType(id->ID_name));
+          }
+| Call { $$ = new expr_t(((call_t*)$1)->type); }
+| NUM {$$ = new expr_t(INT);}
+| NUM B {
+    num_t* num = (num_t*)$1;
+    if (stoi(num->num_val) > 255)
+    {
+        errorByteTooLarge(yylineno, num->num_val);
+        exit(1);
+    }
+    $$ = new expr_t(BYTE);
+}
+| STRING {$$ = new expr_t(STRING);}
+| TRUE {$$ = new expr_t(BOOL);}
+| FALSE {$$ = new expr_t(BOOL);}
+| NOT Expr {
+    expr_t* exp = (expr_t*)$2;
+    if (exp->type != BOOL) {
+        errorMismatch(yylineno);
+        exit(1);
+    }
+    $$ = new expr_t(BOOL);
+}
+| Expr AND Expr {
+    expr_t* first = (expr_t*)$1;
+    expr_t* second = (expr_t*)$3;
+    if (first->type != BOOL  || second->type != BOOL ) {
+        errorMismatch(yylineno);
+        exit(1);
+    }
+    $$ = new expr_t(BOOL);
+}
+| Expr OR Expr {
+    expr_t* first = (expr_t*)$1;
+    expr_t* second = (expr_t*)$3;
+    if (first->type != BOOL  || second->type != BOOL ) {
+        errorMismatch(yylineno);
+        exit(1);
+    }
+    $$ = new expr_t(BOOL);
+}
+| Expr RELOP Expr {
+    expr_t* first = (expr_t*)$1;
+    expr_t* second = (expr_t*)$3;
+    TypesEnum type = SumType(first->type, second->type);
+    if (type == NULL_TYPE) {
+        errorMismatch(yylineno);
+        exit(1);
+    }
+    $$ = new expr_t(BOOL);
+}
+| Expr EQUALOP Expr {
+    expr_t* first = (expr_t*)$1;
+    expr_t* second = (expr_t*)$3;
+    TypesEnum type = SumType(first->type, second->type);
+    if (type == NULL_TYPE) {
+        errorMismatch(yylineno);
+        exit(1);
+    }
+    $$ = new expr_t(BOOL);
+}
+| LPAREN Type RPAREN Expr {
+    type_t* type = (type_t*)$2;
+    expr_t* exp = (expr_t*)$4;
+    if(ConversionLegality(exp->type , type->type)) {
+        $$ = new expr_t(type->type);
+    }
+    else
+    {
+        errorMismatch(yylineno);
+        exit(1);
+    }
+ }
+
+ IsExpBool : Expr { if ((*(expr_t*)$1).type != BOOL)
+                {
+                    errorMismatch(yylineno);
+                    exit(1);
+                }}
+ OpenScope : /*epsilon*/ { symbol_table->openScope(); }
+ WhileScope: /*epsilon*/ { symbol_table->openScope(true); }
+ CloseScope: /*epsilon*/  { symbol_table->closeScope(); }
 %%
 
 int main()
 {
-	int res = yyparse();
-    delete tables;
-    return res;
+    symbol_table->init();
+	yyparse();
 }
 
 int yyerror(const char * message)
 {
 	errorSyn(yylineno);
-	exit(0);
+	exit(1);
 }
