@@ -1,0 +1,4 @@
+1c1
+< line 4: identifier bar is already defined
+---
+> line 5: identifier bar is already defined

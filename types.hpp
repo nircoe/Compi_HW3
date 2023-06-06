@@ -1,124 +1,171 @@
-#ifndef TYPES_HPP
-#define TYPES_HPP
+#ifndef COMPI_TYPES_H
+#define COMPI_TYPES_H
 
 #include <vector>
 #include <iostream>
 #include <string>
 #define YYSTYPE Node*
+
 using std::vector;
 using std::string;
 
+enum TypesEnum {
+    TYPE_VOID,
+    TYPE_BYTE,
+    TYPE_BOOL,
+    TYPE_INT,
+    TYPE_STRING,
+    NULL_TYPE
+};
+
+/**
+ * everyone inherits it
+ */
 class Node {
-    public:
-        virtual ~Node() {};
+public:
+    virtual ~Node() {};
 };
 
+/**
+ * type of token
+ */
 class TypeNode : public Node {
-    string type;
-
-    public:
-        TypeNode(string _type) : type(_type) {};
-        string GetType() { return type; }
+public:
+    TypesEnum type;
+    TypeNode(TypesEnum type) : type(type) {};
 };
 
-class IdNode : public Node {
-    string name;
-    
-    public:
-        IdNode(string _name) :name(_name) {};
-        string GetName() { return name; }
-};
-
+/**
+ * override token type
+ */
 class OverrideNode : public Node {
+public:
     bool isOverride;
-
-    public:
-        OverrideNode(bool _isOverride = false) : isOverride(_isOverride) {};
-        bool CheckIsOverride() { return isOverride; }
+    OverrideNode(bool isOverride = false) : isOverride(isOverride) {};
 };
 
+/**
+ * id token type
+ */
+class IdNode : public Node {
+public:
+    const string name;
+    IdNode(const string name) : name(name){};
+};
+
+/**
+ * num token type
+ */
 class NumNode : public Node {
-    string num_as_string;
-
-    public:
-        NumNode(string _num_as_string) : num_as_string(_num_as_string) {};
-        string GetNumAsString() { return num_as_string; }
+public:
+    string num_val;
+    NumNode(string num_str) : num_val(num_str){};
 };
 
-class ExpNode : public Node {
-    string type;
-
-    public:
-        ExpNode(string _type) : type(_type) {};
-        string GetType() { return type; }
-};
-
-class ExpListNode : public Node {
-    vector<ExpNode*> exps;
-
-    public:
-        ExpListNode(vector<ExpNode*> _exps) : exps(_exps) {};
-        vector<ExpNode*>& GetExpsList() { return exps; }
-};
-
-class FormalDeclNode : public Node {
-    string type;
-    string name;
-
-    public:
-        FormalDeclNode(string _type, string _name) : type(_type) , name(_name) {};
-        string GetType() { return type; }
-        string GetName() { return name; }
-};
-
-class FormalsListNode : public Node {
-    vector<FormalDeclNode*> decls;
-
-    public:
-        FormalsListNode(vector<FormalDeclNode*> _decls) : decls(_decls) {};
-        vector<FormalDeclNode*>& GetDecls() { return decls; }
-};
-
-class FormalsNode : public Node {
-    FormalsListNode* list;
-
-    public:
-        FormalsNode(FormalsListNode* _list = nullptr) : list(_list) {};
-        vector<FormalDeclNode*>& GetList() { return list->GetDecls(); }
-};
-
-class FuncDeclNode : public Node {
-    string type;
-    string name;
-    vector<FormalDeclNode*> decls;
-
-    public:
-        FuncDeclNode(string _type, string _name, vector<FormalDeclNode*> _decls) : type(_type) , name(_name) , decls(_decls) {};
-        string GetType() { return type; }
-        string GetName() { return name; }
-        vector<FormalDeclNode*>& GetDecls() { return decls; }
-};
-
+/**
+ * return type of func
+ */
 class RetTypeNode : public Node {
-    string type;
-
-    public:
-        RetTypeNode(string _type) : type(_type) {};
-        string GetType() { return type; }
+public:
+    TypesEnum type;
+    RetTypeNode(TypesEnum type) : type(type) {};
 };
 
+/**
+ * expression token
+ */
+class ExpNode : public Node {
+public:
+    TypesEnum type;
+    ExpNode(TypesEnum type) : type(type) {};
+};
+
+/**
+ * expression list token
+ */
+class ExpListNode : public Node {
+public:
+    vector<ExpNode*> exprs;
+    ExpListNode(const vector<ExpNode*>& exprs) : exprs(exprs) {};
+    ~ExpListNode() { 
+        for(int i = 0; i < exprs.size(); i++) {
+            if(exprs[i] != nullptr) 
+                delete exprs[i]; 
+        }
+    };
+};
+
+/**
+ * formal declarations token
+ */
+class FormalDeclNode : public Node {
+public:
+    TypesEnum type;
+    const string name;
+    FormalDeclNode(TypesEnum type, const string& name) : type(type), name(name) {};
+};
+
+/**
+ * function declarations token
+ */
+class FuncDeclNode : public Node{
+public:
+    TypesEnum type;
+    string func_name;
+    vector<FormalDeclNode*> declarations;
+    FuncDeclNode(TypesEnum type , const vector<FormalDeclNode*>& declarations, string func_name) :
+                    type(type), declarations(declarations), func_name(func_name){};
+    ~FuncDeclNode() {
+        for(int i = 0; i < declarations.size(); i++) {
+            if(declarations[i] != nullptr) 
+                delete declarations[i]; 
+        }
+    };
+};
+
+/**
+ * formal token type
+ */
+class FormalsNode : public Node {
+public:
+    vector<FormalDeclNode*> declarations;
+    FormalsNode(const vector<FormalDeclNode*>& declarations) : declarations(declarations) {};
+    FormalsNode() {};
+    ~FormalsNode() {
+        for(int i = 0; i < declarations.size(); i++) {
+            if(declarations[i] != nullptr) 
+                delete declarations[i]; 
+        }
+    };
+};
+
+/**
+ * call token
+ */
 class CallNode : public Node {
-    string type;
-    string name;
-    
-    public:
-        CallNode(string _type, string _name) : type(_type) , name(_name) {};
-        string GetType() { return type; }
-        string GetName() { return name; }
+public:
+    TypesEnum type;
+    const string call_name;
+    CallNode(TypesEnum type, const string name) : type(type), call_name(call_name) {};
 };
 
-bool isLegalAssign(string left, string right);
-bool IsLegalConvertion(string from_type, string to_type);
-string GetSumType(string left_type, string right_type);
+/**
+ * formal list token type
+ */
+class FormalsListNode : public Node {
+public:
+    vector<FormalDeclNode*> declarations;
+    FormalsListNode(const vector<FormalDeclNode*>& declarations) : declarations(declarations) {};
+    ~FormalsListNode() {};
+};
 
-#endif
+
+bool ConversionLegality(TypesEnum from, TypesEnum to);
+bool AssignLegality(TypesEnum leftType, TypesEnum rightType);
+TypesEnum SumType(TypesEnum left, TypesEnum right);
+TypesEnum StringToType(const string& s);
+string TypeToString(TypesEnum type);
+
+
+
+#endif //COMPI_TYPES_DECLARATION_H

@@ -69,20 +69,24 @@
 /* First part of user prologue.  */
 #line 1 "parser.ypp"
 
-	#include "hw3_output.hpp"
-    #include "symbol_table.hpp"
+
+    #include "hw3_output.hpp"
+    #include <iostream>
+    #include <stdlib.h>
     #include "types.hpp"
-	#include <iostream>
-	#include <stdlib.h>
+    #include "symbol_table.hpp"
+
     using namespace output;
+    using std::vector;
 
-	extern int yylex();
+    extern int yylex();
     extern int yylineno;
-	int yyerror(const char * message);
+    
+    int yyerror(const char * message);
 
-    TableStack* tables = new TableStack();
+    TablesStack* tables_stack = &(TablesStack::getTablesStack());
 
-#line 86 "parser.tab.cpp"
+#line 90 "parser.tab.cpp"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -147,7 +151,7 @@ enum yysymbol_kind_t
   YYSYMBOL_Program = 34,                   /* Program  */
   YYSYMBOL_Funcs = 35,                     /* Funcs  */
   YYSYMBOL_FuncDecl = 36,                  /* FuncDecl  */
-  YYSYMBOL_37_1 = 37,                      /* $@1  */
+  YYSYMBOL_37_1 = 37,                      /* @1  */
   YYSYMBOL_OverRide = 38,                  /* OverRide  */
   YYSYMBOL_RetType = 39,                   /* RetType  */
   YYSYMBOL_Formals = 40,                   /* Formals  */
@@ -159,10 +163,10 @@ enum yysymbol_kind_t
   YYSYMBOL_ExpList = 46,                   /* ExpList  */
   YYSYMBOL_Type = 47,                      /* Type  */
   YYSYMBOL_Exp = 48,                       /* Exp  */
-  YYSYMBOL_ISEXPBOOL = 49,                 /* ISEXPBOOL  */
-  YYSYMBOL_OPENSCOPE = 50,                 /* OPENSCOPE  */
-  YYSYMBOL_WHILESCOPE = 51,                /* WHILESCOPE  */
-  YYSYMBOL_CLOSESCOPE = 52                 /* CLOSESCOPE  */
+  YYSYMBOL_IsExpBool = 49,                 /* IsExpBool  */
+  YYSYMBOL_OpenScope = 50,                 /* OpenScope  */
+  YYSYMBOL_WhileScope = 51,                /* WhileScope  */
+  YYSYMBOL_CloseScope = 52                 /* CloseScope  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -551,12 +555,12 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,    31,    31,    39,    40,    42,    42,    77,    78,    80,
-      84,    88,    89,    91,    96,   104,   113,   114,   116,   117,
-     126,   142,   158,   159,   165,   172,   173,   174,   175,   181,
-     188,   214,   227,   232,   238,   239,   240,   242,   243,   253,
-     263,   272,   273,   274,   282,   283,   284,   285,   293,   302,
-     311,   320,   331,   338,   339,   340
+       0,    35,    35,    43,    44,    46,    46,    63,    64,    66,
+      70,    74,    75,    77,    82,    90,    99,   100,   102,   103,
+     112,   130,   145,   146,   152,   159,   160,   161,   162,   168,
+     175,   188,   199,   205,   212,   213,   214,   216,   217,   227,
+     237,   245,   246,   247,   255,   256,   257,   258,   266,   275,
+     284,   294,   305,   312,   313,   314
 };
 #endif
 
@@ -576,10 +580,10 @@ static const char *const yytname[] =
   "B", "BOOL", "OVERRIDE", "TRUE", "FALSE", "RETURN", "IF", "WHILE",
   "BREAK", "CONTINUE", "COMMA", "LBRACE", "RBRACE", "ID", "NUM", "STRING",
   "ASSIGN", "OR", "AND", "RELOP", "PLUSMINUS", "MULTDIV", "NOT", "LPAREN",
-  "RPAREN", "SC", "ELSE", "$accept", "Program", "Funcs", "FuncDecl", "$@1",
+  "RPAREN", "SC", "ELSE", "$accept", "Program", "Funcs", "FuncDecl", "@1",
   "OverRide", "RetType", "Formals", "FormalsList", "FormalDecl",
-  "Statements", "Statement", "Call", "ExpList", "Type", "Exp", "ISEXPBOOL",
-  "OPENSCOPE", "WHILESCOPE", "CLOSESCOPE", YY_NULLPTR
+  "Statements", "Statement", "Call", "ExpList", "Type", "Exp", "IsExpBool",
+  "OpenScope", "WhileScope", "CloseScope", YY_NULLPTR
 };
 
 static const char *
@@ -1197,576 +1201,546 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* Program: Funcs  */
-#line 31 "parser.ypp"
+#line 35 "parser.ypp"
                       { 
-                    if(!tables->containsMain()) {
+                    if (!tables_stack->mainExists()) {
                         errorMainMissing();
                         exit(1);
                     }
-                    tables->closeScope();
+                    tables_stack->closeScope();
                     exit(0);
                 }
-#line 1210 "parser.tab.cpp"
+#line 1214 "parser.tab.cpp"
     break;
 
   case 3: /* Funcs: %empty  */
-#line 39 "parser.ypp"
-                      { }
-#line 1216 "parser.tab.cpp"
+#line 43 "parser.ypp"
+                    { }
+#line 1220 "parser.tab.cpp"
     break;
 
   case 4: /* Funcs: FuncDecl Funcs  */
-#line 40 "parser.ypp"
+#line 44 "parser.ypp"
                                { }
-#line 1222 "parser.tab.cpp"
+#line 1226 "parser.tab.cpp"
     break;
 
-  case 5: /* $@1: %empty  */
-#line 42 "parser.ypp"
+  case 5: /* @1: %empty  */
+#line 46 "parser.ypp"
                                                    {
                     OverrideNode* override = (OverrideNode*)yyvsp[-4];
-                    RetTypeNode* ret_type = (RetTypeNode*)yyvsp[-3];
+                    RetTypeNode* returnType = (RetTypeNode*)yyvsp[-3];
                     IdNode* id = (IdNode*)yyvsp[-2];
                     FormalsNode* formals = (FormalsNode*)yyvsp[0];
 
-                    vector<string> type;
-                    type.push_back(ret_type->GetType());
-                    vector<FormalDeclNode*> vec = formals->GetList();
-                    for(int i = 0; i < vec.size(); i++) {
-                        type.push_back(vec[i]->GetType());
-                    }
-                    int res = tables->Insert(id->GetName(), type, 0, override->CheckIsOverride(), true);
-                    switch(res) {
-                        case ERROR_DEF:
-                            errorDef(yylineno, id->GetName());
-                            break;
-                        case ERROR_NO_OVERRIDE:
-                            errorFuncNoOverride(yylineno, id->GetName());
-                            break;
-                        case ERROR_OVERRIDE_NO_DECL:
-                            errorOverrideWithoutDeclaration(yylineno, id->GetName());
-                            break;
-                        case ERROR_MAIN_OVERRIDE:
-                            errorMainOverride(yylineno);
-                            break;
+                    int res = tables_stack->declFunc(id->name, returnType->type, formals, override->isOverride, yylineno);
+                    if(res == -1) {
+                        exit(1);
                     }
 
-                    if(res != SUCCESS) exit(1);
-                    // should add $$ = new FuncDeclNode* ?
+                    yyval = new FuncDeclNode(returnType->type, formals->declarations, id->name);
 
                 }
-#line 1259 "parser.tab.cpp"
+#line 1245 "parser.tab.cpp"
     break;
 
-  case 6: /* FuncDecl: OverRide RetType ID LPAREN Formals $@1 RPAREN LBRACE Statements RBRACE  */
-#line 73 "parser.ypp"
+  case 6: /* FuncDecl: OverRide RetType ID LPAREN Formals @1 RPAREN LBRACE Statements RBRACE  */
+#line 59 "parser.ypp"
                                                   {
-                    tables->funcType = "";
-                    tables->closeScope();    
+                    tables_stack->curr_func_type = NULL_TYPE;
+                    tables_stack->closeScope();   
                 }
-#line 1268 "parser.tab.cpp"
+#line 1254 "parser.tab.cpp"
     break;
 
   case 7: /* OverRide: %empty  */
-#line 77 "parser.ypp"
-                      { yyval = new OverrideNode(); }
-#line 1274 "parser.tab.cpp"
+#line 63 "parser.ypp"
+                    { yyval = new OverrideNode(); }
+#line 1260 "parser.tab.cpp"
     break;
 
   case 8: /* OverRide: OVERRIDE  */
-#line 78 "parser.ypp"
+#line 64 "parser.ypp"
                          { yyval = new OverrideNode(true); }
-#line 1280 "parser.tab.cpp"
+#line 1266 "parser.tab.cpp"
     break;
 
   case 9: /* RetType: Type  */
-#line 80 "parser.ypp"
+#line 66 "parser.ypp"
                      { 
                     TypeNode* type = (TypeNode*)yyvsp[0];
-                    yyval = new RetTypeNode(type->GetType());
+                    yyval = new RetTypeNode(type->type);
                 }
-#line 1289 "parser.tab.cpp"
+#line 1275 "parser.tab.cpp"
     break;
 
   case 10: /* RetType: VOID  */
-#line 84 "parser.ypp"
+#line 70 "parser.ypp"
                      { 
-                    yyval = new RetTypeNode("void");
+                    yyval = new RetTypeNode(TYPE_VOID);
                 }
-#line 1297 "parser.tab.cpp"
+#line 1283 "parser.tab.cpp"
     break;
 
   case 11: /* Formals: %empty  */
-#line 88 "parser.ypp"
-                     { yyval = new FormalsNode(); }
-#line 1303 "parser.tab.cpp"
+#line 74 "parser.ypp"
+                    { yyval = new FormalsNode(); }
+#line 1289 "parser.tab.cpp"
     break;
 
   case 12: /* Formals: FormalsList  */
-#line 89 "parser.ypp"
-                            { yyval = new FormalsNode((FormalsListNode*)yyvsp[0]); }
-#line 1309 "parser.tab.cpp"
+#line 75 "parser.ypp"
+                            { yyval = new FormalsNode(((FormalsListNode*)yyvsp[0])->declarations); }
+#line 1295 "parser.tab.cpp"
     break;
 
   case 13: /* FormalsList: FormalDecl  */
-#line 91 "parser.ypp"
+#line 77 "parser.ypp"
                            { 
                     vector<FormalDeclNode*> vec;
                     vec.insert(vec.begin(), (FormalDeclNode*)yyvsp[0]);
                     yyval = new FormalsListNode(vec);
                 }
-#line 1319 "parser.tab.cpp"
+#line 1305 "parser.tab.cpp"
     break;
 
   case 14: /* FormalsList: FormalDecl COMMA FormalsList  */
-#line 96 "parser.ypp"
+#line 82 "parser.ypp"
                                              { 
-                    FormalDeclNode* decl = (FormalDeclNode*)yyvsp[-2];
-                    FormalsListNode* list = (FormalsListNode*)yyvsp[0];
-                    vector<FormalDeclNode*> vec = list->GetDecls();
-                    vec.insert(vec.begin(), decl);
-                    yyval = new FormalsListNode(vec);
+                    FormalDeclNode* formal_dec = (FormalDeclNode*)yyvsp[-2];
+                    FormalsListNode* formal_list = (FormalsListNode*)yyvsp[0];
+                    formal_list->declarations.insert(formal_list->declarations.begin(), formal_dec);
+
+                    yyval = new FormalsListNode(formal_list->declarations);
+                }
+#line 1317 "parser.tab.cpp"
+    break;
+
+  case 15: /* FormalDecl: Type ID  */
+#line 90 "parser.ypp"
+                        { 
+                    IdNode* id = (IdNode*)yyvsp[0];
+                    TypeNode* type = (TypeNode*)yyvsp[-1];
+                    if (tables_stack->isInCurrScope(id->name)) {
+                        errorDef(yylineno, id->name);
+                        exit(1);
+                    }
+                    yyval = new FormalDeclNode(type->type, id->name);
                 }
 #line 1331 "parser.tab.cpp"
     break;
 
-  case 15: /* FormalDecl: Type ID  */
-#line 104 "parser.ypp"
-                        { 
-                    TypeNode* type = (TypeNode*)yyvsp[-1];
-                    IdNode* id = (IdNode*)yyvsp[0];
-                    if(tables->isInCurrentScope(id->GetName())) {
-                        errorDef(yylineno, id->GetName());
-                        exit(1);
-                    }
-                    yyval = new FormalDeclNode(type->GetType(), id->GetName());
-                }
-#line 1345 "parser.tab.cpp"
-    break;
-
   case 16: /* Statements: Statement  */
-#line 113 "parser.ypp"
+#line 99 "parser.ypp"
                           { }
-#line 1351 "parser.tab.cpp"
+#line 1337 "parser.tab.cpp"
     break;
 
   case 17: /* Statements: Statements Statement  */
-#line 114 "parser.ypp"
+#line 100 "parser.ypp"
                                      { }
-#line 1357 "parser.tab.cpp"
+#line 1343 "parser.tab.cpp"
     break;
 
-  case 18: /* Statement: LBRACE OPENSCOPE Statements RBRACE CLOSESCOPE  */
-#line 116 "parser.ypp"
+  case 18: /* Statement: LBRACE OpenScope Statements RBRACE CloseScope  */
+#line 102 "parser.ypp"
                                                               { }
-#line 1363 "parser.tab.cpp"
+#line 1349 "parser.tab.cpp"
     break;
 
   case 19: /* Statement: Type ID SC  */
-#line 117 "parser.ypp"
+#line 103 "parser.ypp"
                            { 
                     TypeNode* type = (TypeNode*)yyvsp[-2];
                     IdNode* id = (IdNode*)yyvsp[-1];
-                    int res = tables->Insert(id->GetName(), { type->GetType() }, tables->offsets.top());
-                    if(res == ERROR_DEF) {
-                        errorDef(yylineno, id->GetName());
+                    if (tables_stack->symbDeclared(id->name)) {
+                        errorDef(yylineno, id->name);
                         exit(1);
                     }
+                    tables_stack->declVar(id->name, type->type);
                 }
-#line 1377 "parser.tab.cpp"
+#line 1363 "parser.tab.cpp"
     break;
 
   case 20: /* Statement: Type ID ASSIGN Exp SC  */
-#line 126 "parser.ypp"
+#line 112 "parser.ypp"
                                       { 
                     TypeNode* type = (TypeNode*)yyvsp[-4];
                     IdNode* id = (IdNode*)yyvsp[-3];
                     ExpNode* exp = (ExpNode*)yyvsp[-1];
-                    if(isLegalAssign(type->GetType(), exp->GetType())) {
-                        int res = tables->Insert(id->GetName(), { type->GetType() }, tables->offsets.top());
-                        if(res == ERROR_DEF) {
-                            errorDef(yylineno, id->GetName());
-                            exit(1);
+                    if (tables_stack->symbDeclared(id->name)) {
+                        errorDef(yylineno, id->name);
+                        exit(1);
+                    }
+                    else {
+                        if (AssignLegality(type->type, exp->type)) {
+                            tables_stack->declVar(id->name, type->type);
                         }
-                    }
-                    else {
-                        errorMismatch(yylineno);
-                        exit(1);
-                    }
-                }
-#line 1398 "parser.tab.cpp"
-    break;
-
-  case 21: /* Statement: ID ASSIGN Exp SC  */
-#line 142 "parser.ypp"
-                                 { 
-                    IdNode* id = (IdNode*)yyvsp[-3];
-                    ExpNode* exp = (ExpNode*)yyvsp[-1];
-                    int res = tables->containsSymbol(id->GetName(), { exp->GetType() });
-                    if(res == ERROR_UNDEF) {
-                        errorUndef(yylineno, id->GetName());
-                        exit(1);
-                    }
-                    else {
-                        string type = tables->getType(id->GetName());
-                        if(!isLegalAssign(type, exp->GetType())) {
+                        else {
                             errorMismatch(yylineno);
                             exit(1);
                         }
                     }
                 }
-#line 1419 "parser.tab.cpp"
+#line 1386 "parser.tab.cpp"
+    break;
+
+  case 21: /* Statement: ID ASSIGN Exp SC  */
+#line 130 "parser.ypp"
+                                 { 
+                    IdNode* id = (IdNode*)yyvsp[-3];
+                    ExpNode* exp = (ExpNode*)yyvsp[-1];
+                    if (!tables_stack->symbDeclared(id->name)) {
+                        errorUndef(yylineno, id->name);
+                        exit(1);
+                    }
+                    else {
+                        TypesEnum type = tables_stack->getIDType(id->name);
+                        if (!AssignLegality(type, exp->type)) {
+                            errorMismatch(yylineno);
+                            exit(1);
+                        }
+                    }
+                }
+#line 1406 "parser.tab.cpp"
     break;
 
   case 22: /* Statement: Call SC  */
-#line 158 "parser.ypp"
+#line 145 "parser.ypp"
                         { }
-#line 1425 "parser.tab.cpp"
+#line 1412 "parser.tab.cpp"
     break;
 
   case 23: /* Statement: RETURN SC  */
-#line 159 "parser.ypp"
+#line 146 "parser.ypp"
                           { 
-                    if(tables->funcType != "void") {
+                    if(tables_stack->curr_func_type != TYPE_VOID) {
                         errorMismatch(yylineno);
                         exit(1);
                     }
                 }
-#line 1436 "parser.tab.cpp"
+#line 1423 "parser.tab.cpp"
     break;
 
   case 24: /* Statement: RETURN Exp SC  */
-#line 165 "parser.ypp"
+#line 152 "parser.ypp"
                               { 
                     ExpNode* exp = (ExpNode*)yyvsp[-1];
-                    if(!isLegalAssign(tables->funcType, exp->GetType())) {
+                    if(!AssignLegality(tables_stack->curr_func_type, exp->type)) {
                         errorMismatch(yylineno);
                         exit(1);
                     }
                 }
-#line 1448 "parser.tab.cpp"
+#line 1435 "parser.tab.cpp"
     break;
 
-  case 25: /* Statement: IF LPAREN ISEXPBOOL RPAREN OPENSCOPE Statement CLOSESCOPE  */
-#line 172 "parser.ypp"
+  case 25: /* Statement: IF LPAREN IsExpBool RPAREN OpenScope Statement CloseScope  */
+#line 159 "parser.ypp"
                                                                           { }
-#line 1454 "parser.tab.cpp"
+#line 1441 "parser.tab.cpp"
     break;
 
-  case 26: /* Statement: IF LPAREN ISEXPBOOL RPAREN OPENSCOPE Statement CLOSESCOPE ELSE OPENSCOPE Statement CLOSESCOPE  */
-#line 173 "parser.ypp"
+  case 26: /* Statement: IF LPAREN IsExpBool RPAREN OpenScope Statement CloseScope ELSE OpenScope Statement CloseScope  */
+#line 160 "parser.ypp"
                                                                                                               { }
-#line 1460 "parser.tab.cpp"
+#line 1447 "parser.tab.cpp"
     break;
 
-  case 27: /* Statement: WHILE LPAREN ISEXPBOOL RPAREN WHILESCOPE Statement CLOSESCOPE  */
-#line 174 "parser.ypp"
+  case 27: /* Statement: WHILE LPAREN IsExpBool RPAREN WhileScope Statement CloseScope  */
+#line 161 "parser.ypp"
                                                                               { }
-#line 1466 "parser.tab.cpp"
+#line 1453 "parser.tab.cpp"
     break;
 
   case 28: /* Statement: BREAK SC  */
-#line 175 "parser.ypp"
+#line 162 "parser.ypp"
                          { 
-                    if(!tables->isCurrentScopeWhile()) {
+                    if(!tables_stack->isCurrScopeInWhile()) {
                         errorUnexpectedBreak(yylineno);
                         exit(1);
                     }
                 }
-#line 1477 "parser.tab.cpp"
+#line 1464 "parser.tab.cpp"
     break;
 
   case 29: /* Statement: CONTINUE SC  */
-#line 181 "parser.ypp"
+#line 168 "parser.ypp"
                             {
-                    if(!tables->isCurrentScopeWhile()) {
+                    if(!tables_stack->isCurrScopeInWhile()) {
                         errorUnexpectedContinue(yylineno);
                         exit(1);
                     }
                 }
-#line 1488 "parser.tab.cpp"
+#line 1475 "parser.tab.cpp"
     break;
 
   case 30: /* Call: ID LPAREN ExpList RPAREN  */
-#line 188 "parser.ypp"
+#line 175 "parser.ypp"
                                          {
                     IdNode* id = (IdNode*)yyvsp[-3];
-                    ExpListNode* exp_list = (ExpListNode*)yyvsp[-1];
-                    vector<string> types;
-                    vector<ExpNode*> list = exp_list->GetExpsList();
-                    for(int i = 0; i < list.size(); i++) {
-                        types.push_back(list[i]->GetType());
+                    ExpListNode* expr_list = (ExpListNode*)yyvsp[-1];
+                    if(!tables_stack->symbDeclared(id->name, true)) {
+                        errorUndefFunc(yylineno, id->name);
+                        exit(1);
                     }
-                    int res = tables->containsSymbol(id->GetName(), types, true);
-                    switch(res) {
-                        case ERROR_UNDEF_FUNC:
-                            errorUndefFunc(yylineno, id->GetName());
-                            exit(1);
-                            break;
-                        case ERROR_PROTOTYPE_MISMATCH:
-                            errorPrototypeMismatch(yylineno, id->GetName());
-                            exit(1);
-                            break;
-                        case ERROR_AMBIGUOUS_CALL:
-                            errorAmbiguousCall(yylineno, id->GetName());
-                            exit(1);
-                            break;
+                    int res = tables_stack->checkFuncParams(id->name, expr_list->exprs, yylineno);
+                    if(res == -1) {
+                        exit(1);
                     }
-                    if(res != SUCCESS) exit(1);
-                    yyval = new CallNode(tables->getType(id->GetName()), id->GetName());
+                    yyval = new CallNode(tables_stack->getFuncType(id->name, expr_list->exprs), id->name);
+                }
+#line 1493 "parser.tab.cpp"
+    break;
+
+  case 31: /* Call: ID LPAREN RPAREN  */
+#line 188 "parser.ypp"
+                                 { 
+                    IdNode* id = (IdNode*)yyvsp[-2];
+                    if(!tables_stack->symbDeclared(id->name, true)){
+                        errorUndefFunc(yylineno, id->name);
+                        exit(1);
+                    }
+                    tables_stack->checkFuncParams(id->name, yylineno);
+                    vector<ExpNode*> exprs;
+                    yyval = new CallNode(tables_stack->getFuncType(id->name, exprs), id->name);
+                }
+#line 1508 "parser.tab.cpp"
+    break;
+
+  case 32: /* ExpList: Exp  */
+#line 199 "parser.ypp"
+                    { 
+                    ExpNode* exp = (ExpNode*)yyvsp[0];
+                    vector<ExpNode*> exps;
+                    exps.insert(exps.begin(), exp);
+                    yyval = new ExpListNode(exps);
                 }
 #line 1519 "parser.tab.cpp"
     break;
 
-  case 31: /* Call: ID LPAREN RPAREN  */
-#line 214 "parser.ypp"
-                                 { 
-                    IdNode* id = (IdNode*)yyvsp[-2];
-                    int res = tables->containsSymbol(id->GetName(), {}, true);
-                    switch(res) {
-                        case ERROR_UNDEF_FUNC:
-                            errorUndefFunc(yylineno, id->GetName());
-                            exit(1);
-                            break;
-                    }
-                    if(res != SUCCESS) exit(1);
-                    yyval = new CallNode(tables->getType(id->GetName()), id->GetName());
-                }
-#line 1536 "parser.tab.cpp"
-    break;
-
-  case 32: /* ExpList: Exp  */
-#line 227 "parser.ypp"
-                    { 
-                    vector<ExpNode*> exps;
-                    exps.push_back((ExpNode*)yyvsp[0]);
-                    yyval = new ExpListNode(exps);
-                }
-#line 1546 "parser.tab.cpp"
-    break;
-
   case 33: /* ExpList: Exp COMMA ExpList  */
-#line 232 "parser.ypp"
+#line 205 "parser.ypp"
                                   { 
-                    ExpListNode* list = (ExpListNode*)yyvsp[0];
-                    list->GetExpsList().push_back((ExpNode*)yyvsp[-2]);
-                    yyval = new ExpListNode(list->GetExpsList());
+                    ExpNode* exp = (ExpNode*)yyvsp[-2];
+                    ExpListNode* expr_list = (ExpListNode*)yyvsp[0];
+                    expr_list->exprs.insert(expr_list->exprs.begin(), exp);
+                    yyval = new ExpListNode(expr_list->exprs);
                 }
-#line 1556 "parser.tab.cpp"
+#line 1530 "parser.tab.cpp"
     break;
 
   case 34: /* Type: INT  */
-#line 238 "parser.ypp"
-                    { yyval = new TypeNode("int"); }
-#line 1562 "parser.tab.cpp"
+#line 212 "parser.ypp"
+                    { yyval = new TypeNode(TYPE_INT); }
+#line 1536 "parser.tab.cpp"
     break;
 
   case 35: /* Type: BYTE  */
-#line 239 "parser.ypp"
-                     { yyval = new TypeNode("byte"); }
-#line 1568 "parser.tab.cpp"
+#line 213 "parser.ypp"
+                     { yyval = new TypeNode(TYPE_BYTE); }
+#line 1542 "parser.tab.cpp"
     break;
 
   case 36: /* Type: BOOL  */
-#line 240 "parser.ypp"
-                     { yyval = new TypeNode("bool"); }
-#line 1574 "parser.tab.cpp"
+#line 214 "parser.ypp"
+                     { yyval = new TypeNode(TYPE_BOOL); }
+#line 1548 "parser.tab.cpp"
     break;
 
   case 37: /* Exp: LPAREN Exp RPAREN  */
-#line 242 "parser.ypp"
-                                  { yyval = new ExpNode(((ExpNode*)yyvsp[-1])->GetType()); }
-#line 1580 "parser.tab.cpp"
+#line 216 "parser.ypp"
+                                  { yyval = new ExpNode(((ExpNode*)yyvsp[-1])->type); }
+#line 1554 "parser.tab.cpp"
     break;
 
   case 38: /* Exp: Exp PLUSMINUS Exp  */
-#line 243 "parser.ypp"
+#line 217 "parser.ypp"
                                   { 
-                    ExpNode* exp1 = (ExpNode*)yyvsp[-2];
-                    ExpNode* exp2 = (ExpNode*)yyvsp[0];
-                    string type = GetSumType(exp1->GetType(), exp2->GetType());
-                    if(type == "") {
+                    ExpNode* first = (ExpNode*)yyvsp[-2];
+                    ExpNode* second = (ExpNode*)yyvsp[0];
+                    TypesEnum type = SumType(first->type, second->type);
+                    if (type == NULL_TYPE) {
                         errorMismatch(yylineno);
                         exit(1);
                     }
                     yyval = new ExpNode(type);
                 }
-#line 1595 "parser.tab.cpp"
+#line 1569 "parser.tab.cpp"
     break;
 
   case 39: /* Exp: Exp MULTDIV Exp  */
-#line 253 "parser.ypp"
+#line 227 "parser.ypp"
                                 { 
-                    ExpNode* exp1 = (ExpNode*)yyvsp[-2];
-                    ExpNode* exp2 = (ExpNode*)yyvsp[0];
-                    string type = GetSumType(exp1->GetType(), exp2->GetType());
-                    if(type == "") {
+                    ExpNode* first = (ExpNode*)yyvsp[-2];
+                    ExpNode* second = (ExpNode*)yyvsp[0];
+                    TypesEnum type = SumType(first->type, second->type);
+                    if (type == NULL_TYPE) {
                         errorMismatch(yylineno);
                         exit(1);
                     }
                     yyval = new ExpNode(type);
                 }
-#line 1610 "parser.tab.cpp"
+#line 1584 "parser.tab.cpp"
     break;
 
   case 40: /* Exp: ID  */
-#line 263 "parser.ypp"
+#line 237 "parser.ypp"
                    { 
                     IdNode* id = (IdNode*)yyvsp[0];
-                    string type = tables->getType(id->GetName());
-                    if(type == "") {
-                        errorUndef(yylineno, id->GetName());
-                        exit(1);
+                    if(!tables_stack->symbDeclared(id->name)) {
+                            errorUndef(yylineno, id->name);
+                            exit(1);
                     }
-                    yyval = new ExpNode(type);
+                    yyval = new ExpNode(tables_stack->getIDType(id->name));
                 }
-#line 1624 "parser.tab.cpp"
+#line 1597 "parser.tab.cpp"
     break;
 
   case 41: /* Exp: Call  */
-#line 272 "parser.ypp"
-                     { yyval = new ExpNode(((CallNode*)yyvsp[0])->GetType()); }
-#line 1630 "parser.tab.cpp"
+#line 245 "parser.ypp"
+                     { yyval = new ExpNode(((CallNode*)yyvsp[0])->type); }
+#line 1603 "parser.tab.cpp"
     break;
 
   case 42: /* Exp: NUM  */
-#line 273 "parser.ypp"
-                    { yyval = new ExpNode("int"); }
-#line 1636 "parser.tab.cpp"
+#line 246 "parser.ypp"
+                    { yyval = new ExpNode(TYPE_INT); }
+#line 1609 "parser.tab.cpp"
     break;
 
   case 43: /* Exp: NUM B  */
-#line 274 "parser.ypp"
+#line 247 "parser.ypp"
                       { 
                     NumNode* num = (NumNode*)yyvsp[-1];
-                    if(stoi(num->GetNumAsString()) > 255) {
-                        errorByteTooLarge(yylineno, num->GetNumAsString());
+                    if(std::stoi(num->num_val) > 255) {
+                        errorByteTooLarge(yylineno, num->num_val);
                         exit(1);
                     }
-                    yyval = new ExpNode("byte");
+                    yyval = new ExpNode(TYPE_BYTE);
                 }
-#line 1649 "parser.tab.cpp"
+#line 1622 "parser.tab.cpp"
     break;
 
   case 44: /* Exp: STRING  */
-#line 282 "parser.ypp"
-                       { yyval = new ExpNode("string"); }
-#line 1655 "parser.tab.cpp"
+#line 255 "parser.ypp"
+                       { yyval = new ExpNode(TYPE_STRING); }
+#line 1628 "parser.tab.cpp"
     break;
 
   case 45: /* Exp: TRUE  */
-#line 283 "parser.ypp"
-                     { yyval = new ExpNode("bool"); }
-#line 1661 "parser.tab.cpp"
+#line 256 "parser.ypp"
+                     { yyval = new ExpNode(TYPE_BOOL); }
+#line 1634 "parser.tab.cpp"
     break;
 
   case 46: /* Exp: FALSE  */
-#line 284 "parser.ypp"
-                      { yyval = new ExpNode("bool"); }
-#line 1667 "parser.tab.cpp"
+#line 257 "parser.ypp"
+                      { yyval = new ExpNode(TYPE_BOOL); }
+#line 1640 "parser.tab.cpp"
     break;
 
   case 47: /* Exp: NOT Exp  */
-#line 285 "parser.ypp"
+#line 258 "parser.ypp"
                         { 
                     ExpNode* exp = (ExpNode*)yyvsp[0];
-                    if(exp->GetType() != "bool") {
+                    if (exp->type != TYPE_BOOL) {
                         errorMismatch(yylineno);
                         exit(1);
                     }
-                    yyval = new ExpNode("bool");
+                    yyval = new ExpNode(TYPE_BOOL);
                 }
-#line 1680 "parser.tab.cpp"
+#line 1653 "parser.tab.cpp"
     break;
 
   case 48: /* Exp: Exp AND Exp  */
-#line 293 "parser.ypp"
+#line 266 "parser.ypp"
                             { 
-                    ExpNode* exp1 = (ExpNode*)yyvsp[-2];
-                    ExpNode* exp2 = (ExpNode*)yyvsp[0];
-                    if(exp1->GetType() != "bool" || exp2->GetType() != "bool") {
+                    ExpNode* first = (ExpNode*)yyvsp[-2];
+                    ExpNode* second = (ExpNode*)yyvsp[0];
+                    if (first->type != TYPE_BOOL || second->type != TYPE_BOOL) {
                         errorMismatch(yylineno);
                         exit(1);
                     }
-                    yyval = new ExpNode("bool");
+                    yyval = new ExpNode(TYPE_BOOL);
                 }
-#line 1694 "parser.tab.cpp"
+#line 1667 "parser.tab.cpp"
     break;
 
   case 49: /* Exp: Exp OR Exp  */
-#line 302 "parser.ypp"
+#line 275 "parser.ypp"
                            { 
-                    ExpNode* exp1 = (ExpNode*)yyvsp[-2];
-                    ExpNode* exp2 = (ExpNode*)yyvsp[0];
-                    if(exp1->GetType() != "bool" || exp2->GetType() != "bool") {
+                    ExpNode* first = (ExpNode*)yyvsp[-2];
+                    ExpNode* second = (ExpNode*)yyvsp[0];
+                    if (first->type != TYPE_BOOL || second->type != TYPE_BOOL) {
                         errorMismatch(yylineno);
                         exit(1);
                     }
-                    yyval = new ExpNode("bool");
+                    yyval = new ExpNode(TYPE_BOOL);
                 }
-#line 1708 "parser.tab.cpp"
+#line 1681 "parser.tab.cpp"
     break;
 
   case 50: /* Exp: Exp RELOP Exp  */
-#line 311 "parser.ypp"
+#line 284 "parser.ypp"
                               {
-                    ExpNode* exp1 = (ExpNode*)yyvsp[-2];
-                    ExpNode* exp2 = (ExpNode*)yyvsp[0];
-                    if(GetSumType(exp1->GetType(), exp2->GetType()) == "") {
+                    ExpNode* first = (ExpNode*)yyvsp[-2];
+                    ExpNode* second = (ExpNode*)yyvsp[0];
+                    TypesEnum type = SumType(first->type, second->type);
+                    if (type == NULL_TYPE) {
                         errorMismatch(yylineno);
                         exit(1);
                     }
-                    yyval = new ExpNode("bool");
+                    yyval = new ExpNode(TYPE_BOOL);
+                }
+#line 1696 "parser.tab.cpp"
+    break;
+
+  case 51: /* Exp: LPAREN Type RPAREN Exp  */
+#line 294 "parser.ypp"
+                                       {
+                    TypeNode* type = (TypeNode*)yyvsp[-2];
+                    ExpNode* exp = (ExpNode*)yyvsp[0];
+                    if(!ConversionLegality(exp->type , type->type)) {
+                        errorMismatch(yylineno);
+                        exit(1);
+                    }
+                    yyval = new ExpNode(type->type);
+                }
+#line 1710 "parser.tab.cpp"
+    break;
+
+  case 52: /* IsExpBool: Exp  */
+#line 305 "parser.ypp"
+                    { 
+                    ExpNode* exp = (ExpNode*)yyvsp[0];
+                    if(exp->type != TYPE_BOOL) {
+                        errorMismatch(yylineno);
+                        exit(1);
+                    }
                 }
 #line 1722 "parser.tab.cpp"
     break;
 
-  case 51: /* Exp: LPAREN Type RPAREN Exp  */
-#line 320 "parser.ypp"
-                                       {
-                    TypeNode* type = (TypeNode*)yyvsp[-2];
-                    ExpNode* exp = (ExpNode*)yyvsp[0];
-                    if(!IsLegalConvertion(exp->GetType() ,type->GetType())) {
-                        errorMismatch(yylineno);
-                        exit(1);
-                    }
-                    yyval = new ExpNode(type->GetType());
-                }
-#line 1736 "parser.tab.cpp"
+  case 53: /* OpenScope: %empty  */
+#line 312 "parser.ypp"
+                { tables_stack->openScope(); }
+#line 1728 "parser.tab.cpp"
     break;
 
-  case 52: /* ISEXPBOOL: Exp  */
-#line 331 "parser.ypp"
-                    {
-                    ExpNode* exp = (ExpNode*)yyvsp[0];
-                    if(exp->GetType() != "bool") {
-                        errorMismatch(yylineno);
-                        exit(1);
-                    }
-                }
-#line 1748 "parser.tab.cpp"
+  case 54: /* WhileScope: %empty  */
+#line 313 "parser.ypp"
+                { tables_stack->openScope(true); }
+#line 1734 "parser.tab.cpp"
     break;
 
-  case 53: /* OPENSCOPE: %empty  */
-#line 338 "parser.ypp"
-                { tables->newScope(); }
-#line 1754 "parser.tab.cpp"
-    break;
-
-  case 54: /* WHILESCOPE: %empty  */
-#line 339 "parser.ypp"
-                { tables->newScope(true); }
-#line 1760 "parser.tab.cpp"
-    break;
-
-  case 55: /* CLOSESCOPE: %empty  */
-#line 340 "parser.ypp"
-                { tables->closeScope(); }
-#line 1766 "parser.tab.cpp"
+  case 55: /* CloseScope: %empty  */
+#line 314 "parser.ypp"
+                { tables_stack->closeScope(); }
+#line 1740 "parser.tab.cpp"
     break;
 
 
-#line 1770 "parser.tab.cpp"
+#line 1744 "parser.tab.cpp"
 
       default: break;
     }
@@ -1959,18 +1933,17 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 342 "parser.ypp"
+#line 315 "parser.ypp"
 
 
 int main()
 {
-	int res = yyparse();
-    delete tables;
-    return res;
+    tables_stack->Init();
+	yyparse();
 }
 
 int yyerror(const char * message)
 {
 	errorSyn(yylineno);
-	exit(0);
+	exit(1);
 }
